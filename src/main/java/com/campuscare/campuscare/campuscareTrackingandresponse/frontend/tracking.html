@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Care - Request Tracking & Responses</title>
+    <link href="https://jsdelivr.net" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Request Tracking & Responses</h3>
+        <span class="badge bg-primary fs-6" id="requestHeader">Request #1</span>
+    </div>
+
+    <!-- Status Update Panel (Staff / Admin) -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white fw-bold">Update Request Status</div>
+        <div class="card-body">
+            <form id="statusForm" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">New Status</label>
+                    <select id="newStatus" class="form-select" required>
+                        <option value="ASSIGNED">ASSIGNED</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="RESOLVED">RESOLVED</option>
+                        <option value="CLOSED">CLOSED</option>
+                        <option value="REJECTED">REJECTED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Status Note (Optional)</label>
+                    <input type="text" id="statusNote" class="form-control" maxlength="255" placeholder="e.g. Technician dispatched to Hostel B">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chronological Timeline -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Activity & Response Timeline</span>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="staffViewToggle" checked>
+                <label class="form-check-label" for="staffViewToggle">Show Internal Notes</label>
+            </div>
+        </div>
+        <div class="card-body" id="timelineContainer">
+            <p class="text-muted">Loading timeline...</p>
+        </div>
+    </div>
+
+    <!-- Post Response Form -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white fw-bold">Post a Response</div>
+        <div class="card-body">
+            <form id="responseForm">
+                <div class="mb-3">
+                    <textarea id="responseMessage" class="form-control" rows="3" required placeholder="Write a reply or update..."></textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isInternal">
+                        <label class="form-check-label text-secondary" for="isInternal">
+                            Internal staff note (hidden from student)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Response</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const requestId = params.get("requestId") || 1;
+    // Seed user IDs from V1__schema.sql: 1 = Test Admin, 2 = Test Staff, 3 = Test Student
+    const currentUserId = 2;
+
+    document.getElementById("requestHeader").textContent = `Request #${requestId}`;
+
+    async function loadTimeline() {
+        const staffView = document.getElementById("staffViewToggle").checked;
+        const res = await fetch(`/api/requests/${requestId}/timeline?staffView=${staffView}`);
+        const container = document.getElementById("timelineContainer");
+
+        if (!res.ok) {
+            container.innerHTML = `<div class="alert alert-warning">No timeline data found for Request #${requestId}.</div>`;
+            return;
+        }
+
+        const items = await res.json();
+        if (items.length === 0) {
+            container.innerHTML = `<p class="text-muted mb-0">No status changes or responses recorded yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = items.map(item => {
+            const time = new Date(item.timestamp).toLocaleString();
+            if (item.type === "STATUS_CHANGE") {
+                return `
+                    <div class="border-start border-4 border-info ps-3 mb-3">
+                        <div class="small text-muted">${time} • <strong>${item.actorName}</strong></div>
+                        <div>Status changed from <span class="badge bg-secondary">${item.oldStatus}</span> to <span class="badge bg-info text-dark">${item.newStatus}</span></div>
+                        ${item.message ? `<div class="text-muted small mt-1">Note: ${item.message}</div>` : ""}
+                    </div>`;
+            } else {
+                const badge = item.isInternal ? `<span class="badge bg-warning text-dark ms-2">Internal Note</span>` : "";
+                return `
+                    <div class="border-start border-4 ${item.isInternal ? "border-warning" : "border-primary"} ps-3 mb-3">
+                        <div class="small text-muted">${time} • <strong>${item.actorName}</strong> ${badge}</div>
+                        <div class="mt-1">${item.message}</div>
+                    </div>`;
+            }
+        }).join("");
+    }
+
+    document.getElementById("statusForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const payload = {
+            newStatus: document.getElementById("newStatus").value,
+            changedByUserId: currentUserId,
+            note: document.getElementById("statusNote").value
+        };
+        const res = await fetch(`/api/requests/${requestId}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || "Failed to update status");
+        } else {
+            document.getElementById("statusNote").value = "";
+            loadTimeline();
+        }
+    });
+
+    document.getElementById("responseForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const payload = {
+            authorId: currentUserId,
+            message: document.getElementById("responseMessage").value,
+            isInternal: document.getElementById("isInternal").checked
+        };
+        const res = await fetch(`/api/requests/${requestId}/responses`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || "Failed to post response");
+        } else {
+            document.getElementById("responseMessage").value = "";
+            document.getElementById("isInternal").checked = false;
+            loadTimeline();
+        }
+    });
+
+    document.getElementById("staffViewToggle").addEventListener("change", loadTimeline);
+    loadTimeline();
+</script>
+</body>
+</html>
