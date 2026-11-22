@@ -1,73 +1,230 @@
-# Campus Care
+# Campus Care - Student Service Request & Complaint Management System
 
-Student Service Request & Complaint Management System, Group 7.
-Stack: Java + Spring Boot, PostgreSQL (pgAdmin), HTML/CSS/JavaScript + Bootstrap.
+A complete Spring Boot 4.1.2 application for managing student service requests and complaints in a university setting.
 
-## 1. First-time setup (everyone)
+## Tech Stack
 
-1. Install Git, JDK 17+, VS Code or IntelliJ IDEA, and PostgreSQL (includes pgAdmin).
-2. Clone the repo:
-   ```
-   git clone https://github.com/danielkigumo/campuscare.git
-   cd campuscare
-   ```
-3. In pgAdmin, create an empty database named `campuscare`.
-4. Create `src/main/resources/application-local.properties` (this file is git-ignored):
-   ```
-   spring.datasource.url=jdbc:postgresql://localhost:5432/campuscare
-   spring.datasource.username=postgres
-   spring.datasource.password=YOUR_LOCAL_PASSWORD
-   ```
-   Never commit your password.
-5. Run the app with the `local` profile. Flyway builds all tables automatically
-   from `src/main/resources/db/migration`.
-6. Check in pgAdmin that `campuscare` now has 8 tables.
+- **Backend**: Java 17, Spring Boot 4.1.2, Spring Security, Spring Data JPA
+- **Database**: PostgreSQL (production), H2 (testing)
+- **Authentication**: JWT (JSON Web Tokens)
+- **Migration**: Flyway
+- **Frontend**: HTML5, Bootstrap 5, Vanilla JavaScript, Chart.js
+- **Build**: Maven
 
-## 2. Branches
-
-- `main` is always working. Nobody commits to it directly.
-- One branch per piece of work, named `module-feature`:
-  `auth-login`, `requests-submit`, `tracking-status`, `admin-dashboard`, `db-schema`.
-
-## 3. Daily workflow
+## Project Structure
 
 ```
-git checkout main
-git pull                          # always start the day with this
-git checkout -b requests-submit   # new branch for your task
-# ... write code ...
-git add .
-git commit -m "Add request submission form and endpoint"
-git push -u origin requests-submit
+src/
+├── main/
+│   ├── java/com/campuscare/campuscare/
+│   │   ├── CampuscareApplication.java
+│   │   ├── controller/          # REST Controllers
+│   │   │   ├── AuthController.java        # Registration, Login, Token Refresh
+│   │   │   ├── RequestController.java     # Student request CRUD
+│   │   │   ├── AdminController.java       # Admin dashboard, assignment, users
+│   │   │   ├── TrackingController.java    # Request tracking, timeline, notifications
+│   │   │   └── CategoryController.java    # Category listing
+│   │   ├── dto/                 # Data Transfer Objects
+│   │   ├── model/               # JPA Entities
+│   │   │   ├── User.java
+│   │   │   ├── Role.java
+│   │   │   ├── Department.java
+│   │   │   ├── Category.java
+│   │   │   ├── Request.java
+│   │   │   ├── RequestStatus.java
+│   │   │   ├── RequestStatusHistory.java
+│   │   │   ├── Response.java
+│   │   │   └── Notification.java
+│   │   ├── repository/          # Spring Data JPA Repositories
+│   │   ├── security/            # JWT & Security Config
+│   │   │   ├── JwtUtil.java
+│   │   │   ├── JwtAuthenticationFilter.java
+│   │   │   ├── SecurityConfig.java
+│   │   │   ├── CustomUserDetailsService.java
+│   │   │   └── UserPrincipal.java
+│   │   └── service/             # Business Logic
+│   │       ├── AuthService.java
+│   │       ├── RequestService.java
+│   │       ├── AdminService.java
+│   │       └── TrackingService.java
+│   └── resources/
+│       ├── application.properties
+│       ├── db/migration/V1__schema.sql
+│       └── static/              # Frontend pages
+│           ├── login.html
+│           ├── register.html
+│           ├── dashboard.html       # Student dashboard
+│           ├── admin-dashboard.html # Admin/Staff dashboard
+│           └── tracking.html        # Request tracking & responses
+└── test/
+    ├── java/com/campuscare/campuscare/
+    │   └── CampuscareApplicationTests.java
+    └── resources/
+        └── application-test.properties  # H2 test config
 ```
 
-Then on GitHub: open a Pull Request into `main`.
-- The other person in your module pair reviews and merges it.
-- Any PR that touches `db/migration`, entities or repositories also needs a review
-  from Adrian or Samantha (Module 5).
+## Features
 
-After a PR is merged, everyone runs `git checkout main && git pull`.
+### Authentication Module
+- Student registration with validation
+- JWT-based login with access & refresh tokens
+- Role-based access control (STUDENT, STAFF, ADMIN)
+- Password encryption with BCrypt
+- Token refresh endpoint
 
-## 4. Database changes
+### Request Management (Student)
+- Create service requests & complaints
+- View own requests with filtering
+- Update requests (only in SUBMITTED status)
+- Cancel requests (only in SUBMITTED status)
+- Real-time status tracking
 
-- Never edit an existing migration (for example `V1__schema.sql`).
-- To change the database, add a new numbered script:
-  `V2__add_phone_to_requests.sql`, `V3__...`
-- Ask Module 5 (Adrian, Samantha) through the task board. They write the script.
-- Post in the WhatsApp group when a database change is merged, so everyone pulls.
+### Tracking & Responses
+- Chronological timeline (status changes + responses)
+- Staff/Admin can update request status with audit trail
+- Public responses visible to students
+- Internal staff notes (hidden from students)
+- Email-like notifications for students
 
-## 5. Who owns what
+### Admin Dashboard
+- Statistics cards (total, submitted, in-progress, resolved, rejected)
+- Requests by status chart (Chart.js)
+- Paginated, searchable, filterable request table
+- Assign requests to staff
+- User management (view all users, staff list)
 
-| Module | Pair | Main area |
-| --- | --- | --- |
-| 1. Authentication & User Management | Arisa, Bett | auth and user code |
-| 2. Request / Complaint Management | Richard, Brown | request code |
-| 3. Tracking & Responses | Daniel, Nyukuri | tracking and response code |
-| 4. Admin Dashboard & Reports | Chiaji, Arisa | dashboard and reports |
-| 5. Database & Integration | Bett, Samantha | entities, repositories, migrations |
+## Quick Start
 
-## 6. Rules
+### Prerequisites
+- Java 17+ (JDK)
+- Maven (or use included `mvnw`)
+- PostgreSQL 16+ (or Docker)
 
-- No passwords, tokens or `.env` files in Git.
-- Small commits with clear messages.
-- If `git pull` shows a conflict, ask your module partner before resolving it.
+### 1. Start PostgreSQL (Docker)
+```bash
+docker-compose up -d
+```
+
+### 2. Configure Database
+Edit `src/main/resources/application.properties`:
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/campuscare
+spring.datasource.username=postgres
+spring.datasource.password=your_password
+```
+
+### 3. Build & Run
+```bash
+# Using Maven wrapper (recommended)
+./mvnw spring-boot:run
+
+# Or with compiled JAR
+./mvnw clean package
+java -jar target/campuscare-0.0.1-SNAPSHOT.jar
+```
+
+### 4. Access Application
+- **Student Portal**: http://localhost:8080/login.html
+- **Admin Portal**: http://localhost:8080/login.html (login as admin/staff)
+- **Request Tracking**: http://localhost:8080/tracking.html?requestId=1
+
+### 5. Run Tests
+```bash
+./mvnw test
+```
+Tests use H2 in-memory database automatically.
+
+## Default Test Accounts (from Flyway migration)
+| Role | Email | Password |
+|------|-------|----------|
+| ADMIN | admin@campus.example | (register via app) |
+| STAFF | staff@campus.example | (register via app) |
+| STUDENT | student@campus.example | (register via app) |
+
+> **Note**: The seed data in `V1__schema.sql` has placeholder password hashes. Register new users through the application.
+
+## API Endpoints
+
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new student |
+| POST | `/api/auth/login` | Login, get JWT tokens |
+| POST | `/api/auth/refresh` | Refresh access token |
+
+### Student Requests
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/requests` | Create new request |
+| GET | `/api/requests/my` | Get my requests |
+| GET | `/api/requests/{id}` | Get request details |
+| PUT | `/api/requests/{id}` | Update request (SUBMITTED only) |
+| DELETE | `/api/requests/{id}` | Cancel request (SUBMITTED only) |
+
+### Admin/Staff
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/dashboard` | Dashboard statistics |
+| GET | `/api/admin/requests` | All requests (paginated) |
+| GET | `/api/admin/requests/status/{status}` | Filter by status |
+| PUT | `/api/admin/requests/{id}/assign` | Assign to staff |
+| GET | `/api/admin/users` | All users (paginated) |
+| GET | `/api/admin/users/staff` | Staff members |
+
+### Tracking & Notifications
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| PATCH | `/api/requests/{id}/status` | Update status (audit trail) |
+| POST | `/api/requests/{id}/responses` | Add response/note |
+| GET | `/api/requests/{id}/timeline` | Get timeline |
+| GET | `/api/users/{id}/notifications` | Get user notifications |
+| PATCH | `/api/notifications/{id}/read` | Mark as read |
+
+### Categories
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/categories` | All categories |
+| GET | `/api/categories/active` | Active categories only |
+
+## Request Status Flow
+```
+SUBMITTED → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED
+                ↓           ↓
+             REJECTED    REJECTED
+                ↓
+            CANCELLED (from SUBMITTED only)
+```
+
+## Development
+
+### Database Migration
+Flyway migrations in `src/main/resources/db/migration/`:
+- `V1__schema.sql` - Initial schema with seed data
+
+### Adding New Migrations
+```sql
+-- V2__description.sql
+ALTER TABLE users ADD COLUMN new_field VARCHAR(100);
+```
+
+### Frontend Development
+Static files in `src/main/resources/static/` are served directly. No build step required.
+
+## Security Notes
+- Change `app.jwt.secret` in production (use 256-bit key)
+- Use HTTPS in production
+- Configure CORS for production domains
+- Enable `spring.jpa.hibernate.ddl-auto=validate` in production
+
+## Team (Group 7)
+- Daniel Kigumo (220852)
+- Lionel Arisa (220842)
+- Patrick Chiaji (223611)
+- Brown Mitsanze (223608)
+- Richard Luduba (222763)
+- Adrian Bett (221411)
+- Samantha Mobisa (220935)
+- Nicholas Nyukuri (222205)
+
+## License
+Academic Project - Group 7 Software Engineering

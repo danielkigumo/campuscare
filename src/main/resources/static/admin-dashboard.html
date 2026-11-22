@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Care - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #475569;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --info: #0891b2;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+            --sidebar-width: 260px;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--light); }
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--dark);
+            color: #fff;
+            z-index: 100;
+            transition: transform 0.2s ease;
+        }
+        .sidebar .brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .brand-icon {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; margin-bottom: 0.75rem;
+        }
+        .brand h4 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+        .brand small { color: rgba(255,255,255,0.5); font-size: 0.75rem; }
+        .sidebar-nav { padding: 1rem; }
+        .nav-item { margin-bottom: 0.25rem; }
+        .nav-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-link i { width: 1.25rem; font-size: 1.1rem; }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding: 0.5rem; }
+        .user-avatar {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+        }
+        .user-details { flex: 1; min-width: 0; }
+        .user-name { font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-email { font-size: 0.7rem; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-logout {
+            width: 100%;
+            padding: 0.625rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: all 0.15s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.25); color: #fff; }
+        .main-content { margin-left: var(--sidebar-width); padding: 2rem; min-height: 100vh; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h2 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--dark); }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+        .stat-card.primary::before { background: var(--primary); }
+        .stat-card.success::before { background: var(--success); }
+        .stat-card.warning::before { background: var(--warning); }
+        .stat-card.danger::before { background: var(--danger); }
+        .stat-card.info::before { background: var(--info); }
+        .stat-card .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .stat-card.primary .stat-icon { background: #dbeafe; color: var(--primary); }
+        .stat-card.success .stat-icon { background: #d1fae5; color: var(--success); }
+        .stat-card.warning .stat-icon { background: #fef3c7; color: var(--warning); }
+        .stat-card.danger .stat-icon { background: #fee2e2; color: var(--danger); }
+        .stat-card.info .stat-icon { background: #e0f2fe; color: var(--info); }
+        .stat-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.25rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--dark); line-height: 1; }
+        .card { border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+        .card-header { background: #fff; border-bottom: 1px solid var(--border); padding: 1rem 1.25rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .table { margin: 0; }
+        .table th { font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid var(--border); padding: 0.875rem 1rem; background: var(--light); }
+        .table td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+        .table tbody tr:last-child td { border-bottom: none; }
+        .table tbody tr:hover td { background: var(--light); }
+        .badge { font-weight: 500; padding: 0.35em 0.65em; border-radius: 6px; font-size: 0.7rem; }
+        .btn { border-radius: 8px; font-weight: 500; font-size: 0.8rem; padding: 0.4rem 0.875rem; transition: all 0.15s; }
+        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+        .btn-outline-primary { border-color: var(--primary); color: var(--primary); }
+        .btn-outline-primary:hover { background: var(--primary); color: #fff; }
+        .btn-outline-secondary { border-color: var(--border); color: var(--secondary); }
+        .btn-outline-secondary:hover { background: var(--light); }
+        .btn-outline-danger { border-color: var(--danger); color: var(--danger); }
+        .btn-outline-danger:hover { background: var(--danger); color: #fff; }
+        .form-control, .form-select { border-radius: 8px; border: 1px solid var(--border); padding: 0.5rem 0.875rem; font-size: 0.875rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+        .empty-state p { margin: 0; font-weight: 500; }
+        .empty-state small { color: #cbd5e1; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+        .sidebar-toggle { display: none; position: fixed; top: 1rem; left: 1rem; z-index: 200; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; opacity: 0; transition: opacity 0.2s; }
+        .mobile-overlay.active { opacity: 1; }
+        .chart-container { height: 300px; }
+        .pagination-info { font-size: 0.8rem; color: #64748b; }
+        .btn-group-sm .btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 5rem 1rem 2rem; }
+            .sidebar-toggle { display: flex; }
+            .mobile-overlay.active { display: block; }
+            .chart-container { height: 250px; }
+        }
+    </style>
+</head>
+<body>
+<!-- Mobile Sidebar Toggle -->
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">
+    <i class="bi bi-list fs-5"></i>
+</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="brand">
+        <div class="brand-icon"><i class="bi bi-hospital"></i></div>
+        <h4>Campus Care</h4>
+        <small>Admin Dashboard</small>
+    </div>
+    <div class="sidebar-nav">
+        <div class="nav-item">
+            <a class="nav-link active" href="#" data-section="dashboard">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </div>
+        <div class="nav-item">
+            <a class="nav-link" href="#" data-section="allRequests">
+                <i class="bi bi-list-task"></i> All Requests
+            </a>
+        </div>
+        <div class="nav-item">
+            <a class="nav-link" href="#" data-section="users">
+                <i class="bi bi-people"></i> Users
+            </a>
+        </div>
+        <div class="nav-item">
+            <a class="nav-link" href="#" data-section="staff">
+                <i class="bi bi-person-badge"></i> Staff
+            </a>
+        </div>
+    </div>
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar"><i class="bi bi-person-circle"></i></div>
+            <div class="user-details">
+                <div class="user-name" id="sidebarUserName">Admin</div>
+                <div class="user-email" id="sidebarUserEmail">admin@campus.example</div>
+            </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main-content" role="main">
+    <!-- Dashboard Section -->
+    <section id="section-dashboard" class="section active" aria-labelledby="admindashboard-heading">
+        <header class="page-header">
+            <h2 id="admindashboard-heading">Admin Dashboard</h2>
+        </header>
+
+        <div class="stat-grid" role="region" aria-label="System Statistics">
+            <div class="stat-card primary">
+                <div class="stat-icon"><i class="bi bi-file-text"></i></div>
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-icon"><i class="bi bi-inbox"></i></div>
+                <div class="stat-label">Submitted</div>
+                <div class="stat-value" id="statSubmitted">0</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-label">In Progress</div>
+                <div class="stat-value" id="statInProgress">0</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-label">Resolved</div>
+                <div class="stat-value" id="statResolved">0</div>
+            </div>
+        </div>
+
+        <div class="stat-grid" role="region" aria-label="Additional Statistics">
+            <div class="stat-card danger">
+                <div class="stat-icon"><i class="bi bi-x-circle"></i></div>
+                <div class="stat-label">Rejected</div>
+                <div class="stat-value" id="statRejected">0</div>
+            </div>
+            <div class="stat-card primary">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="statUsers">0</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="bi bi-mortarboard"></i></div>
+                <div class="stat-label">Students</div>
+                <div class="stat-value" id="statStudents">0</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
+                <div class="stat-label">Staff</div>
+                <div class="stat-value" id="statStaff">0</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-clock-history me-2"></i> Recent Requests</span>
+                        <a href="#" class="btn btn-sm btn-outline-primary" onclick="showSection('allRequests')">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table" id="recentRequestsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Student</th>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentRequestsBody">
+                                    <tr><td colspan="5"><div class="empty-state py-4"><i class="bi bi-hourglass-split"></i><p>Loading...</p></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-pie-chart me-2"></i> Requests by Status</div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- All Requests Section -->
+    <section id="section-allRequests" class="section" aria-labelledby="allrequests-heading">
+        <header class="page-header">
+            <h2 id="allrequests-heading">All Requests</h2>
+            <div class="d-flex gap-2 flex-wrap">
+                <select id="statusFilter" class="form-select form-select-sm" style="width: auto; min-width: 160px;" onchange="loadAllRequests()">
+                    <option value="">All Statuses</option>
+                    <option value="SUBMITTED">Submitted</option>
+                    <option value="ASSIGNED">Assigned</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                    <option value="REJECTED">Rejected</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+                <input type="text" id="searchInput" class="form-control form-control-sm" style="width: 250px;" placeholder="Search..." onkeyup="debounceSearch()">
+            </div>
+        </header>
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table" id="allRequestsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Student</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Assigned To</th>
+                                <th>Created</th>
+                                <th style="width: 150px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allRequestsBody">
+                            <tr><td colspan="10"><div class="empty-state py-4"><i class="bi bi-hourglass-split"></i><p>Loading...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-1">
+                <span class="pagination-info" id="paginationInfo">Showing 0 of 0</span>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="changePage(-1)" id="prevBtn"><i class="bi bi-chevron-left"></i> Previous</button>
+                    <button class="btn btn-outline-secondary" onclick="changePage(1)" id="nextBtn">Next <i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Users Section -->
+    <section id="section-users" class="section" aria-labelledby="users-heading">
+        <header class="page-header">
+            <h2 id="users-heading">All Users</h2>
+        </header>
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Admission No.</th>
+                                <th>Role</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersBody">
+                            <tr><td colspan="9"><div class="empty-state py-4"><i class="bi bi-hourglass-split"></i><p>Loading...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Staff Section -->
+    <section id="section-staff" class="section" aria-labelledby="staff-heading">
+        <header class="page-header">
+            <h2 id="staff-heading">Staff Members</h2>
+        </header>
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table" id="staffTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffBody">
+                            <tr><td colspan="7"><div class="empty-state py-4"><i class="bi bi-hourglass-split"></i><p>Loading...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Assign Modal -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignModalTitle">Assign Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="assignRequestId">
+                <div class="mb-3">
+                    <label class="form-label fw-medium" for="assigneeSelect">Assign to Staff Member</label>
+                    <select id="assigneeSelect" class="form-select">
+                        <option value="">Select staff member...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAssignBtn">
+                    <i class="bi bi-person-check me-1"></i> Assign
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+
+<script>
+    const API_BASE = '/api/admin';
+    let authToken = localStorage.getItem('accessToken');
+    let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    let currentPage = 0;
+    let searchDebounce;
+    let statusChart;
+
+    if (!authToken || !['ADMIN', 'STAFF'].includes(currentUser.role)) {
+        window.location.href = 'login.html';
+    }
+
+    function authHeaders() {
+        return { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' };
+    }
+
+    // Section navigation
+    function showSection(sectionId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+        const section = document.getElementById('section-' + sectionId);
+        const link = document.querySelector('.sidebar .nav-link[data-section="' + sectionId + '"]');
+        if (section) section.classList.add('active');
+        if (link) link.classList.add('active');
+
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobileOverlay').classList.remove('active');
+
+        if (sectionId === 'dashboard') loadDashboard();
+        else if (sectionId === 'allRequests') loadAllRequests();
+        else if (sectionId === 'users') loadUsers();
+        else if (sectionId === 'staff') loadStaff();
+    }
+
+    // Mobile sidebar
+    document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('mobileOverlay').classList.toggle('active');
+    });
+    document.getElementById('mobileOverlay')?.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobileOverlay').classList.remove('active');
+    });
+
+    document.querySelectorAll('.sidebar .nav-link[data-section]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(link.dataset.section);
+        });
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    });
+
+    // Badge helpers
+    function getStatusBadge(status) {
+        const configs = {
+            'SUBMITTED': { label: 'Submitted', class: 'bg-secondary' },
+            'ASSIGNED': { label: 'Assigned', class: 'bg-info' },
+            'IN_PROGRESS': { label: 'In Progress', class: 'bg-warning text-dark' },
+            'RESOLVED': { label: 'Resolved', class: 'bg-success' },
+            'CLOSED': { label: 'Closed', class: 'bg-primary' },
+            'REJECTED': { label: 'Rejected', class: 'bg-danger' },
+            'CANCELLED': { label: 'Cancelled', class: 'bg-dark' }
+        };
+        const cfg = configs[status] || configs['SUBMITTED'];
+        return `<span class="badge ${cfg.class}">${cfg.label}</span>`;
+    }
+
+    function getPriorityBadge(priority) {
+        const configs = {
+            'LOW': { class: 'bg-success' },
+            'MEDIUM': { class: 'bg-info' },
+            'HIGH': { class: 'bg-warning text-dark' },
+            'URGENT': { class: 'bg-danger' }
+        };
+        const cfg = configs[priority] || configs['LOW'];
+        return `<span class="badge ${cfg.class}">${priority}</span>`;
+    }
+
+    function getRoleBadge(role) {
+        const configs = {
+            'STUDENT': { class: 'bg-primary' },
+            'STAFF': { class: 'bg-warning text-dark' },
+            'ADMIN': { class: 'bg-danger' }
+        };
+        const cfg = configs[role] || configs['STUDENT'];
+        return `<span class="badge ${cfg.class}">${role}</span>`;
+    }
+
+    function formatDate(dateStr) {
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function truncate(str, len) {
+        if (!str) return '';
+        return str.length > len ? str.substring(0, len) + '…' : str;
+    }
+
+    // Dashboard
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API_BASE}/dashboard`, { headers: authHeaders() });
+            const stats = await res.json();
+            updateDashboardStats(stats);
+            loadRecentRequests();
+            loadStatusChart(stats);
+        } catch (err) {
+            console.error('Failed to load dashboard:', err);
+        }
+    }
+
+    function updateDashboardStats(stats) {
+        document.getElementById('statTotal').textContent = stats.totalRequests;
+        document.getElementById('statSubmitted').textContent = stats.submittedRequests;
+        document.getElementById('statInProgress').textContent = stats.assignedRequests + stats.inProgressRequests;
+        document.getElementById('statResolved').textContent = stats.resolvedRequests + stats.closedRequests;
+        document.getElementById('statRejected').textContent = stats.rejectedRequests + stats.cancelledRequests;
+        document.getElementById('statUsers').textContent = stats.totalUsers;
+        document.getElementById('statStudents').textContent = stats.totalStudents;
+        document.getElementById('statStaff').textContent = stats.totalStaff + stats.totalAdmins;
+    }
+
+    async function loadRecentRequests() {
+        try {
+            const res = await fetch(`${API_BASE}/requests?size=10`, { headers: authHeaders() });
+            const data = await res.json();
+            const tbody = document.getElementById('recentRequestsBody');
+            if (!data.content.length) {
+                tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state py-4"><i class="bi bi-inbox"></i><p>No requests</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.content.map(r => `
+                <tr>
+                    <td><strong>#${r.requestId}</strong></td>
+                    <td>${r.studentName}</td>
+                    <td>${truncate(r.title, 35)}</td>
+                    <td>${getStatusBadge(r.status)}</td>
+                    <td>${formatDate(r.createdAt)}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to load recent requests:', err);
+        }
+    }
+
+    function loadStatusChart(stats) {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed', 'Rejected', 'Cancelled'],
+                datasets: [{
+                    data: [stats.submittedRequests, stats.assignedRequests, stats.inProgressRequests,
+                           stats.resolvedRequests, stats.closedRequests, stats.rejectedRequests, stats.cancelledRequests],
+                    backgroundColor: ['#64748b', '#0891b2', '#d97706', '#059669', '#2563eb', '#dc2626', '#1e293b'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } },
+                    tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}` } }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+
+    // All Requests
+    async function loadAllRequests() {
+        const status = document.getElementById('statusFilter').value;
+        const search = document.getElementById('searchInput').value;
+        let url = `${API_BASE}/requests?page=${currentPage}&size=20`;
+        if (status) url += `&status=${status}`;
+
+        try {
+            const res = await fetch(url, { headers: authHeaders() });
+            const data = await res.json();
+            renderAllRequests(data);
+        } catch (err) {
+            console.error('Failed to load requests:', err);
+        }
+    }
+
+    function renderAllRequests(data) {
+        const tbody = document.getElementById('allRequestsBody');
+        if (!data.content.length) {
+            tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state py-4"><i class="bi bi-search"></i><p>No requests found</p></div></td></tr>';
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('paginationInfo').textContent = 'Showing 0 of 0';
+            return;
+        }
+        tbody.innerHTML = data.content.map(r => `
+            <tr>
+                <td><strong>#${r.requestId}</strong></td>
+                <td>${r.studentName} <br><small class="text-muted">${r.studentEmail}</small></td>
+                <td>${truncate(r.title, 45)}</td>
+                <td>${r.categoryName}</td>
+                <td><span class="badge bg-secondary">${r.requestType}</span></td>
+                <td>${getPriorityBadge(r.priority)}</td>
+                <td>${getStatusBadge(r.status)}</td>
+                <td>${r.assignedToName ? `${r.assignedToName} <br><small class="text-muted">${r.assignedToEmail}</small>` : '<span class="text-muted">Unassigned</span>'}</td>
+                <td>${formatDate(r.createdAt)}</td>
+                <td>
+                    ${(r.status === 'SUBMITTED' || r.status === 'ASSIGNED') ? `
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openAssignModal(${r.requestId}, '${r.title.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-person-plus me-1"></i> Assign
+                        </button>
+                    ` : ''}
+                    <a href="tracking.html?requestId=${r.requestId}" class="btn btn-sm btn-outline-secondary">Track</a>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('paginationInfo').textContent = `Page ${data.number + 1} of ${data.totalPages} (${data.totalElements} total)`;
+        document.getElementById('prevBtn').disabled = data.first;
+        document.getElementById('nextBtn').disabled = data.last;
+    }
+
+    function changePage(delta) {
+        currentPage += delta;
+        loadAllRequests();
+    }
+
+    function debounceSearch() {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => {
+            currentPage = 0;
+            loadAllRequests();
+        }, 300);
+    }
+
+    // Assign Modal
+    async function openAssignModal(requestId, title) {
+        try {
+            const res = await fetch(`${API_BASE}/users/staff`, { headers: authHeaders() });
+            const staff = await res.json();
+            const select = document.getElementById('assigneeSelect');
+            select.innerHTML = '<option value="">Select staff member...</option>' +
+                staff.map(s => `<option value="${s.userId}">${s.fullName} (${s.email})</option>`).join('');
+
+            document.getElementById('assignRequestId').value = requestId;
+            document.getElementById('assignModalTitle').textContent = `Assign: ${truncate(title, 50)}`;
+
+            const modal = new bootstrap.Modal(document.getElementById('assignModal'));
+            modal.show();
+        } catch (err) {
+            console.error('Failed to load staff:', err);
+            alert('Failed to load staff members');
+        }
+    }
+
+    document.getElementById('confirmAssignBtn')?.addEventListener('click', async () => {
+        const requestId = document.getElementById('assignRequestId').value;
+        const assigneeId = document.getElementById('assigneeSelect').value;
+        if (!assigneeId) return alert('Please select a staff member');
+
+        const btn = document.getElementById('confirmAssignBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-1"></i> Assigning...';
+
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/assign`, {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify({ assigneeId: parseInt(assigneeId) })
+            });
+            if (!res.ok) throw new Error('Failed to assign request');
+
+            bootstrap.Modal.getInstance(document.getElementById('assignModal')).hide();
+            loadAllRequests();
+            loadDashboard();
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    // Users
+    async function loadUsers() {
+        try {
+            const res = await fetch(`${API_BASE}/users`, { headers: authHeaders() });
+            const data = await res.json();
+            const tbody = document.getElementById('usersBody');
+            if (!data.content.length) {
+                tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state py-4"><i class="bi bi-people"></i><p>No users found</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.content.map(u => `
+                <tr>
+                    <td>${u.userId}</td>
+                    <td>${u.fullName}</td>
+                    <td>${u.email}</td>
+                    <td>${u.phone || 'N/A'}</td>
+                    <td>${u.admissionNo || 'N/A'}</td>
+                    <td>${getRoleBadge(u.role)}</td>
+                    <td>${u.department || 'N/A'}</td>
+                    <td><span class="badge ${u.active ? 'bg-success' : 'bg-secondary'}">${u.active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${formatDate(u.createdAt)}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to load users:', err);
+        }
+    }
+
+    // Staff
+    async function loadStaff() {
+        try {
+            const res = await fetch(`${API_BASE}/users/staff`, { headers: authHeaders() });
+            const staff = await res.json();
+            const tbody = document.getElementById('staffBody');
+            if (!staff.length) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state py-4"><i class="bi bi-person-badge"></i><p>No staff members found</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = staff.map(u => `
+                <tr>
+                    <td>${u.userId}</td>
+                    <td>${u.fullName}</td>
+                    <td>${u.email}</td>
+                    <td>${u.phone || 'N/A'}</td>
+                    <td>${u.department || 'N/A'}</td>
+                    <td><span class="badge ${u.active ? 'bg-success' : 'bg-secondary'}">${u.active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${formatDate(u.createdAt)}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Failed to load staff:', err);
+        }
+    }
+
+    // Initialize
+    document.getElementById('sidebarUserName').textContent = currentUser.fullName || 'Admin';
+    document.getElementById('sidebarUserEmail').textContent = currentUser.email || '';
+    showSection('dashboard');
+</script>
+</body>
+</html>

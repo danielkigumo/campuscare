@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Care - Request Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #475569;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --info: #0891b2;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+        }
+        body { background: var(--light); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .card { border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-header { background: #fff; border-bottom: 1px solid var(--border); padding: 1rem 1.25rem; font-weight: 600; }
+        .badge { font-weight: 500; padding: 0.4em 0.75em; border-radius: 6px; font-size: 0.75rem; }
+        .btn { border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; transition: all 0.15s ease; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+        .btn-success { background: var(--success); border-color: var(--success); }
+        .btn-success:hover { background: #047857; border-color: #047857; }
+        .btn-outline-secondary { border-color: var(--border); color: var(--secondary); }
+        .btn-outline-secondary:hover { background: var(--light); border-color: #cbd5e1; }
+        .form-control, .form-select { border-radius: 8px; border: 1px solid var(--border); padding: 0.625rem 0.875rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .timeline-item { position: relative; padding-left: 1.5rem; padding-bottom: 1.5rem; border-left: 2px solid var(--border); }
+        .timeline-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+        .timeline-item::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 2px solid var(--border); }
+        .timeline-item.status-change::before { background: var(--info); border-color: var(--info); }
+        .timeline-item.response::before { background: var(--primary); border-color: var(--primary); }
+        .timeline-item.internal::before { background: var(--warning); border-color: var(--warning); }
+        .timeline-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .timeline-time { font-size: 0.8rem; color: #64748b; white-space: nowrap; }
+        .timeline-actor { font-weight: 600; color: var(--dark); }
+        .timeline-badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .request-header { background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%); color: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .admin-panel { background: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; }
+        .admin-panel .card-header { background: #fef3c7; border-bottom-color: #fde68a; }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .timeline-item { padding-left: 1rem; }
+            .timeline-item::before { left: -5px; width: 8px; height: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4" style="max-width: 900px;">
+    <!-- Request Header -->
+    <div class="request-header" id="requestHeader">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2 class="mb-1 fw-semibold" id="requestTitle">Loading...</h2>
+                <p class="mb-0 opacity-75" id="requestMeta">Request ID: <span id="requestIdDisplay">-</span></p>
+            </div>
+            <span class="badge" style="background: rgba(255,255,255,0.2); padding: 0.6rem 1rem;" id="currentStatusBadge">
+                <span class="status-indicator"></span>
+                <span id="currentStatusText">Loading...</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Admin/Staff Panel: Status Update -->
+    <div class="card admin-panel mb-4 d-none" id="statusUpdatePanel">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-pencil-square me-2"></i> Update Status</span>
+            <span class="badge" style="background: var(--warning); color: #92400e;">Staff Only</span>
+        </div>
+        <div class="card-body">
+            <form id="statusForm" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-medium">New Status</label>
+                    <select id="newStatus" class="form-select" required>
+                        <option value="" disabled selected>Select status</option>
+                        <option value="ASSIGNED"><i class="bi bi-person-check me-1"></i> Assigned</option>
+                        <option value="IN_PROGRESS"><i class="bi bi-arrow-clockwise me-1"></i> In Progress</option>
+                        <option value="RESOLVED"><i class="bi bi-check-circle me-1"></i> Resolved</option>
+                        <option value="CLOSED"><i class="bi bi-archive me-1"></i> Closed</option>
+                        <option value="REJECTED"><i class="bi bi-x-circle me-1"></i> Rejected</option>
+                        <option value="CANCELLED"><i class="bi bi-slash-circle me-1"></i> Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-medium">Status Note <span class="text-muted fw-normal">(Optional)</span></label>
+                    <input type="text" id="statusNote" class="form-control" maxlength="255" placeholder="e.g., Technician dispatched to Hostel B">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-send me-1"></i> Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span><i class="bi bi-clock-history me-2"></i> Activity Timeline</span>
+            <div class="form-check form-switch d-none" id="staffViewToggleContainer">
+                <input class="form-check-input" type="checkbox" id="staffViewToggle" checked>
+                <label class="form-check-label fw-medium text-secondary" for="staffViewToggle">
+                    <i class="bi bi-eye me-1"></i> Show Internal Notes
+                </label>
+            </div>
+        </div>
+        <div class="card-body p-0" id="timelineContainer">
+            <div class="empty-state py-5">
+                <i class="bi bi-hourglass-split"></i>
+                <p class="mb-0 fw-medium">Loading timeline...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Response -->
+    <div class="card">
+        <div class="card-header"><i class="bi bi-chat-left-text me-2"></i> Post Response</div>
+        <div class="card-body">
+            <form id="responseForm">
+                <div class="mb-3">
+                    <label class="form-label fw-medium visually-hidden" for="responseMessage">Response message</label>
+                    <textarea id="responseMessage" class="form-control" rows="4" required
+                        placeholder="Write a reply or update..."></textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="form-check d-none" id="internalNoteOption">
+                        <input class="form-check-input" type="checkbox" id="isInternal">
+                        <label class="form-check-label text-secondary fw-medium" for="isInternal">
+                            <i class="bi bi-lock-fill me-1"></i> Internal staff note (hidden from student)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i> Send Response
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Back Link -->
+    <div class="text-center mt-4">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const requestId = params.get("requestId");
+    const API_BASE = '/api';
+
+    let authToken = localStorage.getItem('accessToken');
+    let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    let userRole = currentUser.role || 'STUDENT';
+    let isStaff = ['ADMIN', 'STAFF'].includes(userRole);
+    let userId = currentUser.userId;
+
+    if (!authToken) {
+        window.location.href = 'login.html';
+    }
+
+    if (!requestId) {
+        showError('No request ID provided');
+        return;
+    }
+
+    function authHeaders() {
+        return { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' };
+    }
+
+    function showError(msg) {
+        document.getElementById('timelineContainer').innerHTML = `
+            <div class="empty-state py-5">
+                <i class="bi bi-exclamation-triangle" style="color: var(--danger);"></i>
+                <p class="mb-0 fw-medium text-danger">${msg}</p>
+            </div>`;
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function getStatusConfig(status) {
+        const configs = {
+            'SUBMITTED': { label: 'Submitted', color: '#64748b', bg: '#f1f5f9', icon: 'inbox' },
+            'ASSIGNED': { label: 'Assigned', color: '#0891b2', bg: '#e0f2fe', icon: 'person-check' },
+            'IN_PROGRESS': { label: 'In Progress', color: '#d97706', bg: '#fef3c7', icon: 'arrow-clockwise' },
+            'RESOLVED': { label: 'Resolved', color: '#059669', bg: '#d1fae5', icon: 'check-circle' },
+            'CLOSED': { label: 'Closed', color: '#2563eb', bg: '#dbeafe', icon: 'archive' },
+            'REJECTED': { label: 'Rejected', color: '#dc2626', bg: '#fee2e2', icon: 'x-circle' },
+            'CANCELLED': { label: 'Cancelled', color: '#1e293b', bg: '#f1f5f9', icon: 'slash-circle' }
+        };
+        return configs[status] || configs['SUBMITTED'];
+    }
+
+    function renderStatusBadge(status) {
+        const cfg = getStatusConfig(status);
+        return `
+            <span class="badge d-inline-flex align-items-center gap-1" style="background: ${cfg.bg}; color: ${cfg.color};">
+                <i class="bi bi-${cfg.icon}"></i> ${cfg.label}
+            </span>`;
+    }
+
+    async function loadRequestInfo() {
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}`, { headers: authHeaders() });
+            if (!res.ok) throw new Error('Failed to load request');
+            const data = await res.json();
+
+            document.getElementById('requestTitle').textContent = data.title || 'Untitled Request';
+            document.getElementById('requestIdDisplay').textContent = `#${data.requestId}`;
+            document.getElementById('requestMeta').innerHTML = `
+                Request ID: <strong>#${data.requestId}</strong> •
+                ${data.categoryName ? `Category: <strong>${data.categoryName}</strong> •` : ''}
+                Type: <strong>${data.requestType}</strong> •
+                Priority: <strong>${data.priority}</strong>
+            `;
+
+            const cfg = getStatusConfig(data.status);
+            document.getElementById('currentStatusBadge').innerHTML = `
+                <span class="status-indicator" style="background: ${cfg.color};"></span>
+                <span>${cfg.label}</span>`;
+            document.getElementById('currentStatusBadge').style.background = cfg.bg;
+            document.getElementById('currentStatusBadge').style.color = cfg.color;
+
+        } catch (err) {
+            console.error('Failed to load request info:', err);
+            showError('Failed to load request details');
+        }
+    }
+
+    async function loadTimeline() {
+        const staffView = document.getElementById("staffViewToggle")?.checked || false;
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/timeline?staffView=${staffView}`, { headers: authHeaders() });
+            const container = document.getElementById("timelineContainer");
+
+            if (!res.ok) {
+                if (res.status === 403) {
+                    container.innerHTML = `<div class="empty-state py-5"><i class="bi bi-lock-fill" style="color: var(--warning);"></i><p class="mb-0 fw-medium">You don't have permission to view this timeline</p></div>`;
+                } else {
+                    container.innerHTML = `<div class="empty-state py-5"><i class="bi bi-exclamation-triangle" style="color: var(--danger);"></i><p class="mb-0 fw-medium">Failed to load timeline</p></div>`;
+                }
+                return;
+            }
+
+            const items = await res.json();
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state py-5">
+                        <i class="bi bi-journal-text"></i>
+                        <p class="mb-0 fw-medium">No activity recorded yet</p>
+                        <p class="text-muted small mt-1">Status changes and responses will appear here</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const time = formatDate(item.timestamp);
+                const isInternal = item.isInternal === true;
+
+                if (item.type === "STATUS_CHANGE") {
+                    return `
+                        <div class="timeline-item status-change p-3">
+                            <div class="timeline-header">
+                                <span class="timeline-time"><i class="bi bi-clock me-1"></i>${time}</span>
+                                <span class="timeline-actor">${item.actorName}</span>
+                                <span class="timeline-badge" style="background: #e0f2fe; color: #0891b2;">
+                                    <i class="bi bi-arrow-up-right me-1"></i>Status Change
+                                </span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge" style="background: #f1f5f9; color: #64748b;">${item.oldStatus || '—'}</span>
+                                <i class="bi bi-arrow-right text-muted"></i>
+                                ${renderStatusBadge(item.newStatus)}
+                            </div>
+                            ${item.message ? `<div class="text-muted small mt-2"><i class="bi bi-chat-left-text me-1"></i>${item.message}</div>` : ''}
+                        </div>`;
+                } else {
+                    if (isInternal && !staffView) return '';
+
+                    return `
+                        <div class="timeline-item response ${isInternal ? 'internal' : ''} p-3 ${isInternal ? 'bg-amber-50' : ''}" style="${isInternal ? 'border-left-color: var(--warning);' : ''}">
+                            <div class="timeline-header">
+                                <span class="timeline-time"><i class="bi bi-clock me-1"></i>${time}</span>
+                                <span class="timeline-actor">${item.actorName}</span>
+                                <span class="timeline-badge" style="background: ${isInternal ? '#fef3c7' : '#dbeafe'}; color: ${isInternal ? '#92400e' : '#2563eb'};">
+                                    <i class="bi bi-${isInternal ? 'lock' : 'chat-left-text'} me-1"></i>${isInternal ? 'Internal Note' : 'Response'}
+                                </span>
+                            </div>
+                            <div class="mt-2 p-3 rounded" style="background: ${isInternal ? '#fffbeb' : '#f8fafc'}; border: 1px solid ${isInternal ? '#fde68a' : '#e2e8f0'};">
+                                ${item.message}
+                            </div>
+                        </div>`;
+                }
+            }).join('');
+
+        } catch (err) {
+            console.error('Failed to load timeline:', err);
+            showError('Failed to load timeline');
+        }
+    }
+
+    document.getElementById("statusForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
+
+        const payload = {
+            newStatus: document.getElementById("newStatus").value,
+            changedByUserId: userId,
+            note: document.getElementById("statusNote").value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/status`, {
+                method: "PATCH",
+                headers: authHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || "Failed to update status");
+            } else {
+                document.getElementById("statusNote").value = "";
+                document.getElementById("newStatus").value = "";
+                loadTimeline();
+                loadRequestInfo();
+            }
+        } catch (err) {
+            alert("Network error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    document.getElementById("responseForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending...';
+
+        const payload = {
+            authorId: userId,
+            message: document.getElementById("responseMessage").value,
+            isInternal: document.getElementById("isInternal")?.checked || false
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/responses`, {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || "Failed to post response");
+            } else {
+                document.getElementById("responseMessage").value = "";
+                document.getElementById("isInternal").checked = false;
+                loadTimeline();
+            }
+        } catch (err) {
+            alert("Network error: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    document.getElementById("staffViewToggle")?.addEventListener("change", loadTimeline);
+
+    // Initialize UI based on role
+    function setupUIForRole() {
+        const statusPanel = document.getElementById('statusUpdatePanel');
+        const staffToggle = document.getElementById('staffViewToggleContainer');
+        const internalOption = document.getElementById('internalNoteOption');
+
+        if (isStaff) {
+            statusPanel.classList.remove('d-none');
+            staffToggle.classList.remove('d-none');
+            internalOption.classList.remove('d-none');
+        } else {
+            statusPanel.remove();
+            staffToggle.remove();
+            internalOption.remove();
+        }
+    }
+
+    // Start
+    setupUIForRole();
+    loadRequestInfo();
+    loadTimeline();
+</script>
+</body>
+</html>

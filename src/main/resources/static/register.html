@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Care - Create Account</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #475569;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .register-card {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            overflow: hidden;
+        }
+        .register-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: #fff;
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+        }
+        .register-header .brand-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
+        }
+        .register-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .register-header p { margin: 0.5rem 0 0; opacity: 0.9; font-size: 0.95rem; }
+        .register-body { padding: 2rem; }
+        .row { margin-left: -0.5rem; margin-right: -0.5rem; }
+        .col-md-6 { padding-left: 0.5rem; padding-right: 0.5rem; }
+        .form-label { font-weight: 500; color: var(--dark); margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .form-control, .form-select {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.15s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .input-group { position: relative; }
+        .input-group .form-control { padding-right: 3rem; }
+        .toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1.1rem;
+            transition: color 0.15s;
+        }
+        .toggle-password:hover { color: var(--primary); }
+        .password-strength { height: 4px; border-radius: 2px; transition: all 0.3s; background: var(--border); }
+        .form-text { font-size: 0.75rem; color: #94a3b8; margin-top: 0.35rem; }
+        .btn-register {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            transition: all 0.15s ease;
+        }
+        .btn-register:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .btn-register:active { transform: translateY(0); }
+        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        .alert { border-radius: 10px; border: none; padding: 0.875rem 1rem; font-size: 0.875rem; }
+        .alert-danger { background: #fef2f2; color: #dc2626; }
+        .alert-success { background: #f0fdf4; color: #059669; }
+        .register-footer { text-align: center; padding: 1.5rem 2rem 2rem; background: var(--light); border-top: 1px solid var(--border); }
+        .register-footer a { color: var(--primary); text-decoration: none; font-weight: 500; font-size: 0.9rem; }
+        .register-footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="register-card">
+    <div class="register-header">
+        <div class="brand-icon"><i class="bi bi-hospital"></i></div>
+        <h1>Campus Care</h1>
+        <p>Create your student account</p>
+    </div>
+
+    <div class="register-body">
+        <div id="errorAlert" class="alert alert-danger d-none" role="alert"></div>
+        <div id="successAlert" class="alert alert-success d-none" role="alert"></div>
+
+        <form id="registerForm" novalidate>
+            <div class="mb-3">
+                <label class="form-label" for="fullName">Full Name</label>
+                <input type="text" id="fullName" class="form-control" placeholder="John Doe" required maxlength="100" autocomplete="name">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="student@campus.example" required autocomplete="email">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="admissionNo">Admission Number <span class="text-muted fw-normal">(Optional)</span></label>
+                    <input type="text" id="admissionNo" class="form-control" placeholder="000001" maxlength="20" autocomplete="off">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="phone">Phone Number <span class="text-muted fw-normal">(Optional)</span></label>
+                    <input type="tel" id="phone" class="form-control" placeholder="+1 234 567 8900" maxlength="20" autocomplete="tel">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="password">Password</label>
+                <div class="input-group">
+                    <input type="password" id="password" class="form-control" placeholder="Min 8 characters" required minlength="8" autocomplete="new-password">
+                    <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password">
+                        <i class="bi bi-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+                <div class="password-strength" id="passwordStrength"></div>
+                <div class="form-text" id="passwordHelp">At least 8 characters</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="confirmPassword">Confirm Password</label>
+                <div class="input-group">
+                    <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm password" required autocomplete="new-password">
+                    <button type="button" class="toggle-password" id="toggleConfirmPassword" aria-label="Show password">
+                        <i class="bi bi-eye" id="toggleConfirmIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-register" id="registerBtn">
+                <span class="btn-text"><i class="bi bi-person-plus me-2"></i> Create Account</span>
+                <span class="btn-loading d-none"><i class="bi bi-arrow-clockwise spin me-2"></i> Creating...</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="register-footer">
+        <p class="mb-0">Already have an account? <a href="login.html">Sign In</a></p>
+    </div>
+</div>
+
+<style>
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+
+<script>
+    // Password toggle
+    function setupPasswordToggle(inputId, toggleId, iconId) {
+        const input = document.getElementById(inputId);
+        const btn = document.getElementById(toggleId);
+        const icon = document.getElementById(iconId);
+        btn.addEventListener('click', () => {
+            const type = input.type === 'password' ? 'text' : 'password';
+            input.type = type;
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+        });
+    }
+    setupPasswordToggle('password', 'togglePassword', 'toggleIcon');
+    setupPasswordToggle('confirmPassword', 'toggleConfirmPassword', 'toggleConfirmIcon');
+
+    // Password strength meter
+    const passwordInput = document.getElementById('password');
+    const strengthBar = document.getElementById('passwordStrength');
+    const passwordHelp = document.getElementById('passwordHelp');
+
+    passwordInput.addEventListener('input', () => {
+        const val = passwordInput.value;
+        let strength = 0;
+        if (val.length >= 8) strength++;
+        if (/[A-Z]/.test(val)) strength++;
+        if (/[a-z]/.test(val)) strength++;
+        if (/[0-9]/.test(val)) strength++;
+        if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+        const colors = ['#ef4444', '#f59e0b', '#06b6d4', '#3b82f6', '#10b981'];
+        const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+        strengthBar.style.background = colors[strength - 1] || '#e2e8f0';
+        strengthBar.style.width = (strength * 20) + '%';
+        passwordHelp.textContent = labels[strength - 1] || 'At least 8 characters';
+        passwordHelp.style.color = colors[strength - 1] || '#94a3b8';
+    });
+
+    // Form submission
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('registerBtn');
+        const btnText = btn.querySelector('.btn-text');
+        const btnLoading = btn.querySelector('.btn-loading');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+
+        btn.disabled = true;
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+        errorAlert.classList.add('d-none');
+        successAlert.classList.add('d-none');
+
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            showError('Passwords do not match');
+            resetButton();
+            return;
+        }
+
+        const payload = {
+            fullName: document.getElementById('fullName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            admissionNo: document.getElementById('admissionNo').value.trim() || null,
+            phone: document.getElementById('phone').value.trim() || null,
+            password: password
+        };
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Registration failed');
+            }
+
+            showSuccess('Account created successfully! Redirecting...');
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            localStorage.setItem('user', JSON.stringify(data));
+            setTimeout(() => window.location.href = 'dashboard.html', 1500);
+
+        } catch (err) {
+            showError(err.message);
+            resetButton();
+        }
+
+        function resetButton() {
+            btn.disabled = false;
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+        }
+
+        function showError(msg) {
+            errorAlert.textContent = msg;
+            errorAlert.classList.remove('d-none');
+        }
+
+        function showSuccess(msg) {
+            successAlert.textContent = msg;
+            successAlert.classList.remove('d-none');
+        }
+    });
+</script>
+</body>
+</html>
