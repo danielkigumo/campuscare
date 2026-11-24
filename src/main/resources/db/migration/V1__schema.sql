@@ -140,6 +140,6 @@ INSERT INTO categories (name, description, department_id) VALUES
 -- Test accounts for development ONLY. password_hash below is a placeholder,
 -- not a real BCrypt hash: replace it by registering through the app.
 INSERT INTO users (role_id, department_id, admission_no, full_name, email, password_hash) VALUES
-    ((SELECT role_id FROM roles WHERE name = 'ADMIN'),   NULL, NULL,     'Test Admin',   'admin@campus.example',   'REPLACE_WITH_BCRYPT_HASH'),
-    ((SELECT role_id FROM roles WHERE name = 'STAFF'),   (SELECT department_id FROM departments WHERE name = 'ICT Services'), NULL, 'Test Staff', 'staff@campus.example', 'REPLACE_WITH_BCRYPT_HASH'),
-    ((SELECT role_id FROM roles WHERE name = 'STUDENT'), NULL, '000001', 'Test Student', 'student@campus.example', 'REPLACE_WITH_BCRYPT_HASH');
+    ((SELECT role_id FROM roles WHERE name = 'ADMIN'),   NULL, NULL,     'Test Admin',   'admin@strathmore.edu',   'REPLACE_WITH_BCRYPT_HASH'),
+    ((SELECT role_id FROM roles WHERE name = 'STAFF'),   (SELECT department_id FROM departments WHERE name = 'ICT Services'), NULL, 'Test Staff', 'staff@strathmore.edu', 'REPLACE_WITH_BCRYPT_HASH'),
+    ((SELECT role_id FROM roles WHERE name = 'STUDENT'), NULL, '000001', 'Test Student', 'student@strathmore.edu', 'REPLACE_WITH_BCRYPT_HASH');

@@ -35,7 +35,8 @@ public class AuthController {
             AuthResponse response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("Invalid email or password"));
+            return ResponseEntity.status(401)
+                    .body(new ErrorResponse("Invalid university email or password, or account is inactive"));
         }
     }
 
