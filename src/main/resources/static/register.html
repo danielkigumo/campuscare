@@ -130,7 +130,7 @@
 
             <div class="mb-3">
                 <label class="form-label" for="email">Email Address</label>
-                <input type="email" id="email" class="form-control" placeholder="student@campus.example" required autocomplete="email">
+                <input type="email" id="email" class="form-control" placeholder="student@strathmore.edu" required autocomplete="email">
             </div>
 
             <div class="row">
@@ -238,6 +238,13 @@
 
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
+        const email = document.getElementById('email').value.trim().toLowerCase();
+
+        if (!/^[a-z0-9._%+-]+@strathmore\\.edu$/i.test(email)) {
+            showError('Use a valid @strathmore.edu university email address');
+            resetButton();
+            return;
+        }
 
         if (password !== confirmPassword) {
             showError('Passwords do not match');
@@ -247,7 +254,7 @@
 
         const payload = {
             fullName: document.getElementById('fullName').value.trim(),
-            email: document.getElementById('email').value.trim(),
+            email: email,
             admissionNo: document.getElementById('admissionNo').value.trim() || null,
             phone: document.getElementById('phone').value.trim() || null,
             password: password

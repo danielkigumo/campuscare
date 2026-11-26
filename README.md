@@ -137,9 +137,9 @@ Tests use H2 in-memory database automatically.
 ## Default Test Accounts (from Flyway migration)
 | Role | Email | Password |
 |------|-------|----------|
-| ADMIN | admin@campus.example | (register via app) |
-| STAFF | staff@campus.example | (register via app) |
-| STUDENT | student@campus.example | (register via app) |
+| ADMIN | admin@strathmore.edu | (register via app) |
+| STAFF | staff@strathmore.edu | (register via app) |
+| STUDENT | student@strathmore.edu | (register via app) |
 
 > **Note**: The seed data in `V1__schema.sql` has placeholder password hashes. Register new users through the application.
 
@@ -228,3 +228,20 @@ Static files in `src/main/resources/static/` are served directly. No build step 
 
 ## License
 Academic Project - Group 7 Software Engineering
+
+## University email sign-in
+
+CampusCare accepts login and student self-registration addresses ending in
+`@strathmore.edu`. The backend enforces this domain; the browser check is only
+for quicker feedback. Login still requires an existing active account, a
+matching BCrypt password, and the role already assigned to that account in
+the database. Public registration creates STUDENT accounts only; it cannot
+create STAFF or ADMIN accounts.
+
+The H2 development seed accounts use:
+- `student@strathmore.edu`
+- `staff@strathmore.edu`
+- `admin@strathmore.edu`
+
+The seeded development password remains `password123`. Do not use these
+seed credentials or the development H2 configuration in production.

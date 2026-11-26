@@ -22,6 +22,6 @@ INSERT INTO categories (name, description, department_id, is_active) VALUES
 -- Test users (password = "password123" encoded with BCrypt)
 -- Note: In production, register users through the app
 INSERT INTO users (role_id, department_id, admission_no, full_name, email, phone, password_hash, is_active, created_at, updated_at) VALUES
-    (3, NULL, NULL, 'Test Admin', 'admin@campus.example', NULL, '$2a$10$yWAOs4lS.2r6GvYVoOOv2eOugvZ9n5BZjkr5ju4siBFYD4MDj1s2O', true, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
-    (2, 2, NULL, 'Test Staff', 'staff@campus.example', NULL, '$2a$10$yWAOs4lS.2r6GvYVoOOv2eOugvZ9n5BZjkr5ju4siBFYD4MDj1s2O', true, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
-    (1, NULL, '000001', 'Test Student', 'student@campus.example', NULL, '$2a$10$yWAOs4lS.2r6GvYVoOOv2eOugvZ9n5BZjkr5ju4siBFYD4MDj1s2O', true, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+    (3, NULL, NULL, 'Test Admin', 'admin@strathmore.edu', NULL, '$2a$10$yWAOs4lS.2r6GvYVoOOv2eOugvZ9n5BZjkr5ju4siBFYD4MDj1s2O', true, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+    (2, 2, NULL, 'Test Staff', 'staff@strathmore.edu', NULL, '$2a$10$yWAOs4lS.2r6GvYVoOOv2eOugvZ9n5BZjkr5ju4siBFYD4MDj1s2O', true, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+    (1, NULL, '000001', 'Test Student', 'student@strathmore.edu', NULL, '$2a$10$yWAOs4lS.2r6GvYVoOOv2eOugvZ9n5BZjkr5ju4siBFYD4MDj1s2O', true, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());

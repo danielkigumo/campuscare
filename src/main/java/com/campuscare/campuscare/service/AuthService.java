@@ -17,9 +17,26 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Service
 public class AuthService {
+
+    private static final Pattern STRATHMORE_EMAIL =
+            Pattern.compile("^[A-Z0-9._%+-]+@strathmore\\.edu$", Pattern.CASE_INSENSITIVE);
+
+    private String validateUniversityEmail(String email) {
+        if (email == null) {
+            throw new IllegalArgumentException("A Strathmore University email is required");
+        }
+
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        if (!STRATHMORE_EMAIL.matcher(normalizedEmail).matches()) {
+            throw new IllegalArgumentException("Use your @strathmore.edu university email");
+        }
+        return normalizedEmail;
+    }
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -44,7 +61,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.findByEmailIgnoreCase(request.email()).isPresent()) {
+        String email = validateUniversityEmail(request.email());
+
+        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
             throw new RuntimeException("Email already registered");
         }
 
@@ -57,7 +76,7 @@ public class AuthService {
 
         User user = new User();
         user.setFullName(request.fullName());
-        user.setEmail(request.email().toLowerCase());
+        user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setAdmissionNo(request.admissionNo());
         user.setPhone(request.phone());
@@ -75,8 +94,10 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = validateUniversityEmail(request.email());
+
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email().toLowerCase(), request.password())
+                new UsernamePasswordAuthenticationToken(email, request.password())
         );
 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
